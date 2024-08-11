@@ -22,11 +22,22 @@ func Auth(next http.Handler) http.Handler {
 		}
 
 		userID, err := service.GetUserIDByToken(token)
+
 		if err != nil {
 			resp.WriteHeader(http.StatusUnauthorized)
 
 			respBody := &HTTPResponse{}
-			respBody.SetError(errors.New("wrong token"))
+			respBody.SetError(errors.New("invalid token"))
+			resp.Write(respBody.Marshall())
+
+			return
+		}
+
+		if ok, _ := service.GetUserAccessRights(*userID); !ok {
+			resp.WriteHeader(http.StatusForbidden)
+
+			respBody := &HTTPResponse{}
+			respBody.SetError(errors.New("sorry, you have been blocked"))
 			resp.Write(respBody.Marshall())
 
 			return

@@ -7,4 +7,5 @@ import (
 type DB interface {
 	GetUserByToken(token string) (*primitive.ObjectID, error)
 	SetUserToken(token string, userID primitive.ObjectID) error
+	ClearTokens(userID primitive.ObjectID) error
 }

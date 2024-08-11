@@ -2,6 +2,7 @@ package service
 
 import (
 	"authservice/internal/domain"
+	"github.com/sethvargo/go-password/password"
 	"authservice/internal/repository/tokendb"
 	"authservice/internal/repository/userdb"
 	"crypto/md5"
@@ -31,6 +32,7 @@ func SignUp(lp *domain.LoginPassword) (*domain.UserToken, error) {
 		Login:    lp.Login,
 		Password: hash(lp.Password),
 		Role:     domain.UserRoleDefault,
+		Access: true,
 	}
 
 	if err := users.SetUser(&newUser); err != nil {
@@ -61,9 +63,15 @@ func SignIn(lp *domain.LoginPassword) (*domain.UserToken, error) {
 		return nil, err
 	}
 
+	if !user.Access {
+		return nil, errors.New("sorry, you have been blocked")
+	}
+
 	if user.Password != hash(lp.Password) {
 		return nil, errors.New("wrong password")
 	}
+
+
 
 	token := createToken(lp.Login)
 
@@ -84,10 +92,35 @@ func SetUserInfo(ui *domain.UserInfo) error {
 		return err
 	}
 
+	user.Role = ui.Role
+	user.Access = ui.Access
 	user.Name = ui.Name
 
 	return users.SetUser(user)
 
+}
+
+func PatchRole(ur *domain.UserRole) error {
+	user, err := users.GetUser(ur.ID)
+	if err != nil {
+		return err
+	}
+	user.Role = ur.Role
+	return users.SetUser(user)
+
+}
+
+func ChangeAccess(ua *domain.UserAccess) error {
+	user, err := users.GetUser(ua.ID)
+	if err != nil {
+		return err
+	}
+	if !user.Access {
+		user.Access=true
+	} else {
+		user.Access = false
+	}
+	return users.SetUser(user)
 }
 
 func ChangePsw(up *domain.UserPassword) error {
@@ -127,6 +160,12 @@ func GetUserIDByToken(token string) (*primitive.ObjectID, error) {
 	return tokens.GetUserByToken(token)
 }
 
+func GetUserAccessRights(id primitive.ObjectID) (bool, error) {
+
+	userAccess, err := users.GetUser(id)
+	return userAccess.Access, err
+}
+
 func hash(str string) string {
 	hp := sha256.Sum256([]byte(str))
 	return hex.EncodeToString(hp[:])
@@ -138,4 +177,15 @@ func createToken(login string) string {
 	loginChs := md5.Sum([]byte(login))
 
 	return hex.EncodeToString(timeChs[:]) + hex.EncodeToString(loginChs[:])
+}
+
+func CreateTempPsw(id primitive.ObjectID) (string, error) {
+	tmpPsw, err := password.Generate(6, 4, 2, false, false)
+	if err != nil {
+		return "", err
+	}
+	if err = tokens.ClearTokens(id); err!=nil {
+		return tmpPsw, err
+	}
+	return tmpPsw, err
 }

@@ -13,11 +13,14 @@ type User struct {
 	Password string             `json:"password"`
 	Name     string             `json:"name"`
 	Role     string             `json:"role"`
+	Access   bool               `json:"access"`
 }
 
 type UserInfo struct {
-	ID   primitive.ObjectID `json:"id"`
-	Name string             `json:"name"`
+	ID     primitive.ObjectID `json:"id"`
+	Name   string             `json:"name"`
+	Role   string             `json:"role"`
+	Access bool               `json:"access"`
 }
 
 type UserPassword struct {
@@ -33,4 +36,14 @@ type LoginPassword struct {
 type UserToken struct {
 	UserId primitive.ObjectID `json:"id"`
 	Token  string             `json:"token"`
+}
+
+type UserAccess struct {
+	ID     primitive.ObjectID `json:"id"`
+	Access bool               `json:"access"`
+}
+
+type UserRole struct {
+	ID   primitive.ObjectID `json:"id"`
+	Role string             `json:"role"`
 }
