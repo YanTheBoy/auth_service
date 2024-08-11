@@ -32,7 +32,7 @@ func Run() {
 	service.Init(userDB, tokenDB)
 
 	go func() {
-		err := server.Run("localhost", "8000", httphandler.NewRouter())
+		err := server.Run("localhost", "8082", httphandler.NewRouter())
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal("ERROR server run ", err)
 		}

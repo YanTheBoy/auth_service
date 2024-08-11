@@ -49,3 +49,14 @@ func (c *TokenCache) SetUserToken(token string, userID primitive.ObjectID) error
 
 	return nil
 }
+
+func (c *TokenCache) ClearTokens(userID primitive.ObjectID) error {
+	c.mtx.Lock()
+	for k, v := range c.pull {
+		if v == userID {
+			delete(c.pull, k)
+		}
+	}
+	c.mtx.Unlock()
+	return nil
+}
